@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta charset="UTF-8">
+<title>Raspberry Web-Remote Control</title>
+
+</head>
+<body onload="init_webmote();">
+<header>
+<h1>Raspberry Web-Remote Control</h1>
+
+<link rel="stylesheet" type="text/css" href="webmote.css">
+</header>
+
+<section>
+
+Video: <span class="selected_text" id="video_title">house4.mkv</span>
+<span class="span_spaces">&nbsp;</span>
+Subtitles: <span class="selected_text" id="video_subtitles">house4.srt</span>
+<input type="button" class="media_button" id="btn_change_media" value="Change Media" />
+
+<br/>
+
+
+<input type="button" class="remote_button" id="btn_start" value="Start" />
+<input type="button" class="remote_button" id="btn_stop" value="Stop" />
+<input type="button" class="remote_button" id="btn_info" value="Info" />
+<input type="button" class="remote_button" id="btn_subtitle" value="Subtitles" />
+<br/>
+
+<input type="button" class="remote_button" id="btn_volume_down" value="Vol. Dwn." />
+<input type="button" class="remote_button" id="btn_volume_up" value="Vol. Up" />
+<br/>
+
+<input type="button" class="remote_button" id="btn_rw" value="Rewind" />
+<input type="button" class="remote_button" id="btn_pause" value="|| >" />
+<input type="button" class="remote_button" id="btn_ff" value="Fast Forwd." />
+<br/>
+
+<input type="button" class="remote_button" id="btn_left_600" value="<<" />
+<input type="button" class="remote_button" id="btn_left_30" value="<" />
+<input type="button" class="remote_button" id="btn_right_30" value=">" />
+<input type="button" class="remote_button" id="btn_right_600" value=">>" />
+
+</section>
+
+
+<script languaje="text/javascript">
+
+	"use strict";
+
+	init_buttons();
+
+function init_webmote()
+{
+
+	var video = localStorage.getItem("video");
+	var subtitles = localStorage.getItem("subtitles");
+
+	document.getElementById("video_title").innerHTML = video.slice( video.lastIndexOf("/") +1 );
+
+	document.getElementById("video_subtitles").innerHTML = subtitles.slice ( subtitles.lastIndexOf("/") +1 );
+
+	//if ( video === null )
+	//	return;
+
+}
+
+function change_media(){
+	window.location.assign("/medialist.html");
+}
+
+/*
+Asings events to buttons
+*/
+function init_buttons(){
+
+	document.getElementById("btn_change_media").onclick=function(){ 
+		change_media();
+	 };
+
+	document.getElementById("btn_start").onclick=function(){ 
+		sendXhr("start");
+	 };
+
+	document.getElementById("btn_pause").onclick=function(){ 
+		sendXhr("p");
+	 };
+
+	document.getElementById("btn_info").onclick=function(){ 
+		sendXhr("z");
+	 };
+
+	document.getElementById("btn_subtitle").onclick=function(){ 
+		sendXhr("s");
+	 };
+
+	document.getElementById("btn_stop").onclick=function(){ 
+		sendXhr("q");
+	 };
+
+	document.getElementById("btn_rw").onclick=function(){ 
+		sendXhr("<");
+	 };
+
+	document.getElementById("btn_ff").onclick=function(){ 
+		sendXhr(">");
+	 };
+
+	document.getElementById("btn_volume_up").onclick=function(){ 
+		sendXhr("+");
+	 };
+	document.getElementById("btn_volume_down").onclick=function(){ 
+		sendXhr("-");
+	 };
+
+	document.getElementById("btn_left_600").onclick=function(){ 
+		sendXhr("l600");
+	 };
+	document.getElementById("btn_right_600").onclick=function(){ 
+		sendXhr("r600");
+	 };
+	document.getElementById("btn_left_30").onclick=function(){ 
+		sendXhr("l30");
+	 };
+	document.getElementById("btn_right_30").onclick=function(){ 
+		sendXhr("r30");
+	 };
+}
+
+
+function sendXhr( signal )
+{
+	var post_data = "";
+	var xhr = new XMLHttpRequest();
+	var video,subtitles;
+
+
+	if ( signal == null )
+		return;
+
+	post_data = "c=" + signal;
+
+	if( signal === "start" ){
+
+		video = localStorage.getItem("video");
+		subtitles = localStorage.getItem("subtitles");
+
+		//post_data += "&video=" + "/home/pi/multimierda/video/house2.mkv";
+		//post_data += "&subtitles=" + "/home/pi/multimierda/video/house2.srt";
+
+		post_data += "&video=" + video;
+		post_data += "&subtitles=" + subtitles;
+
+	}
+
+
+	xhr.onerror = function(e){
+		alert( "Error creating xhr signal." );
+	}
+
+	xhr.onprogress = function(e){
+		var ratio = e.loaded / e.total;
+		//debug( ratio + "% descargado." );
+	}
+
+	// Se han recibido los datos solicitados
+	xhr.onload = function(e){
+		//xhr_feedback(e, xhr);
+	}
+
+	xhr.open("POST", "omx_command", true);
+
+
+	// Envia el formulario
+	xhr.setRequestHeader ('Content-type','application/x-www-form-urlencoded');
+	xhr.send( post_data );
+
+}
+
+
+</script>
+
+</body>
+</html>
