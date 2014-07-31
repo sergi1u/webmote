@@ -31,6 +31,33 @@ var walk = function(dir, re,  done) {
   });
 };
 
+function start_mp3(mp3) {
+	var spawn;
+	var aParams = [mp3];
+
+	spawn = require('child_process').spawn,
+	 mp3Player = spawn('/home/pi/bin/playMp3', aParams, {  stdio: ['pipe', 'pipe', process.stderr]  });
+
+
+	mp3Player.stdout.on('data', function (data) {
+	  console.log('stdout: ' + data);
+	});
+
+	mp3Player.stderr.on('data', function (data) {
+	  console.log('stderr: ' + data);
+	});
+
+	mp3Player.stdin.on('data', function (data) {
+	  console.log('stdin: ' + data);
+	});
+
+	mp3Player.on('close', function (code) {
+	  console.log('child process exited with code ' + code);
+	});
+
+
+	return mp3Player;
+}
 
 function start_video(video, subtitles) {
 
@@ -92,6 +119,7 @@ function leeHTML( page ){
 //leeHTML("webmote.html");
 
 var player = null;
+var mp3_player = null;
 var aVideos; 
 var aSubtitles;
 
@@ -118,6 +146,14 @@ var server = http.createServer(function (req, res) {
 
     console.log(fecha + " Web request received: " + req.socket.remoteAddress + " " + url);
     res.setHeader("Access-Control-Allow-Origin", "*");
+
+    if( url == "/webmote.css" )
+   	 res.setHeader("Content-type", "text/css");
+    else if( url == "/videos.json" || url == "/subtitles.json" ||  url == "/getMp3Radio.json" )
+   	 res.setHeader("Content-type", "application/json");
+    else
+   	 res.setHeader("Content-type", "text/html");
+
     res.writeHead(200);
 
     if( url == "/index.html" || url == "/webmote.html" ){
@@ -131,9 +167,18 @@ var server = http.createServer(function (req, res) {
       res.end( myHTML );
     }
 
+    else if( url == "/webmote_panel.html"  ){
+      var myHTML = leeHTML("webmote_panel.html");
+      res.end( myHTML );
+    }
+
     else if( url == "/medialist.html"  ){
       var myHTML = leeHTML("medialist.html");  // Va releyendo el fichero esto solo por depuracion
       res.end( myHTML );
+    }
+
+    else if( url === "/getMp3Radio.json"  ){
+       res.end( JSON.stringify( "OK") );
     }
 
     else if( url === "/videos.json"  ){
@@ -164,6 +209,9 @@ var server = http.createServer(function (req, res) {
 		if( param[0] === "c" ){
 			command = param[1];
 		}
+		else if( param[0] === "mp3" ){
+			mp3 = param[1];
+		}
 		else if( param[0] === "video" ){
 			video = param[1];
 		}
@@ -188,24 +236,76 @@ var server = http.createServer(function (req, res) {
 		command = '\x1B\x5B\x44';
 	}
 
+	else if ( command === "start_mp3" && mp3_player == null && player == null){
+		console.log("Starting mp3 reproduction.." + mp3 );
+		mp3_player = start_mp3(mp3);
+	}
 
-	if ( command === "start" && player == null){
+
+	else if ( command === "start" && player == null && mp3_player == null){
 		console.log("Starting video play.." + video + " subtitles " + subtitles);
 		player = start_video(video, subtitles);
-		video_started = true;
+	}
+	else if ( command === "usb" ){
+		var count_return = 0;
+		console.log("Reading usb disks.");
+			walk('/media/usb0', /.mp4|.mkv|.avi$/i , function(err, results) {
+			  if (err) throw err;
+			  aVideos = results.slice();
+			  count_return++;
+			  console.log("Videos read." + count_return );
+			  if ( count_return >1 )
+				res.end('');
+			});
+
+			walk('/media/usb0', /.srt$/i , function(err, results) {
+			  if (err) throw err;
+			  aSubtitles = results.sort();
+			  count_return++;
+			  console.log("Subtitles read." + count_return );
+			  if ( count_return >1 )
+				res.end('');
+			});
+
+	}
+
+	else if ( command === 'lasegonahora' || command === 'lacompetencia' ){
+		var mp3 = require('./getMp3Radio.js');
+		console.log('Getting ' + command + ' MP3.');
+
+		mp3.getMp3( command, function(err, result){
+			if (err) console.log(err);
+			res.end( 'Return module getMp3: ' + result );
+			//res.end('');
+		});
+
+	}
+
+	if( player != null ){
+		console.log("Sending signal to player: " + command );
+		player.stdin.write(command);
+	}
+	else if( mp3_player != null ){
+		if( command ==="q" ){
+			console.log("Sending signal to mp3 player: " + command );
+			mp3_player.stdin.write("q");
+		}
 	}
 	else{
-		if( player != null ){
-			player.stdin.write(command);
-		}
-		else
-			console.log("Player not found.");
+		console.log("Player not found.");
 	}
 
-	if( command === "q" )
-		player = null;
+	if( command === "q" ){
+		console.log("reset player");
+		if( mp3_player ){
+			mp3_player = null;
+                }
+		else if( player )
+			player = null;
+	}
 
-	res.end("");
+	if( command !== "usb" && command !== "lasegonahora" && command !== "lacompetencia" )
+		res.end("");
     }
     // manifiesto para evitar relecturas de paginas estaticas
     else if( url == "/manifest.webmote" ){
