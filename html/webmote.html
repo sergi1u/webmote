@@ -15,15 +15,18 @@
 
 <section>
 
+MP3: <span class="selected_text" id="mp3_title"></span>
+<span class="span_spaces">&nbsp;</span>
 Video: <span class="selected_text" id="video_title">house4.mkv</span>
 <span class="span_spaces">&nbsp;</span>
 Subtitles: <span class="selected_text" id="video_subtitles">house4.srt</span>
-<input type="button" class="media_button" id="btn_change_media" value="Change Media" />
+<input type="button" class="medium_button" id="btn_change_media" value="Change Media" />
 
 <br/>
 
 
 <input type="button" class="remote_button" id="btn_start" value="Start" />
+<input type="button" class="remote_button" id="btn_start_mp3" value="Start MP3" />
 <input type="button" class="remote_button" id="btn_stop" value="Stop" />
 <input type="button" class="remote_button" id="btn_info" value="Info" />
 <input type="button" class="remote_button" id="btn_subtitle" value="Subtitles" />
@@ -55,8 +58,11 @@ Subtitles: <span class="selected_text" id="video_subtitles">house4.srt</span>
 function init_webmote()
 {
 
+	var mp3 = localStorage.getItem("mp3_radio");
 	var video = localStorage.getItem("video");
 	var subtitles = localStorage.getItem("subtitles");
+
+	document.getElementById("mp3_title").innerHTML = mp3.slice( mp3.lastIndexOf("/") +1 );
 
 	document.getElementById("video_title").innerHTML = video.slice( video.lastIndexOf("/") +1 );
 
@@ -67,6 +73,7 @@ function init_webmote()
 
 }
 
+
 function change_media(){
 	window.location.assign("/medialist.html");
 }
@@ -76,12 +83,17 @@ Asings events to buttons
 */
 function init_buttons(){
 
+
 	document.getElementById("btn_change_media").onclick=function(){ 
 		change_media();
 	 };
 
 	document.getElementById("btn_start").onclick=function(){ 
 		sendXhr("start");
+	 };
+
+	document.getElementById("btn_start_mp3").onclick=function(){ 
+		sendXhr("start_mp3");
 	 };
 
 	document.getElementById("btn_pause").onclick=function(){ 
@@ -134,7 +146,7 @@ function sendXhr( signal )
 {
 	var post_data = "";
 	var xhr = new XMLHttpRequest();
-	var video,subtitles;
+	var mp3,video,subtitles;
 
 
 	if ( signal == null )
@@ -155,6 +167,12 @@ function sendXhr( signal )
 
 	}
 
+	else if( signal === "start_mp3" ){
+
+		mp3 = localStorage.getItem("mp3_radio");
+
+		post_data += "&mp3=" + mp3;
+	}
 
 	xhr.onerror = function(e){
 		alert( "Error creating xhr signal." );
