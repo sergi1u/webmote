@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta charset="UTF-8">
+<title>Media Picker</title>
+
+<link rel="stylesheet" type="text/css" href="webmote.css">
+
+</head>
+
+<body>
+<header>
+<h1>Media Picker</h1>
+</header>
+
+<nav>
+<input type="button" class="medium_button" id="btn_return_media" value="Return to webmote" />
+<input type="button" class="medium_button" id="btn_read_usb" value="Read USB disk" />
+<input type="button" class="medium_button" id="btn_get_segonahora" value="Get segonahora" />
+<input type="button" class="medium_button" id="btn_get_lacompetencia" value="Get La Competencia" />
+</nav>
+
+<section class="titles_selector">
+Radio mp3
+<div id="list_mp3_radio" />
+</section>
+
+<section class="titles_selector">
+Videos
+<div id="list_videos" />
+</section>
+
+<section class="subtitles_selector">
+Subtitles
+<div id="list_subtitles" />
+</section>
+
+
+<script languaje="text/javascript">
+
+	"use strict";
+	init_page();
+
+function init_page(){
+
+	reload_media();
+	init_buttons();
+}
+
+function reload_media()
+{
+	get_mp3_radio()
+	get_videos();
+	get_subtitles();
+
+}
+
+function get_mp3_radio()
+{
+	var radioInput="";
+	var spanText;
+	var radioParent = document.getElementById("list_mp3_radio");
+	var mp3_radio = localStorage.getItem("mp3_radio");
+	var option=""
+
+	radioParent.innerHTML="";
+
+   // segonahora
+	option = "/home/pi/multimierda/musica/segonahora.mp3";
+	radioInput = document.createElement("input")
+	radioInput.setAttribute('type', 'radio');
+	radioInput.setAttribute('name', "select_mp3_radio");
+	radioInput.setAttribute('value', option);
+	if( option.localeCompare( mp3_radio ) == 0 )
+		radioInput.setAttribute('checked', 'checked');
+	radioParent.appendChild(radioInput);
+
+	spanText = document.createElement("span")
+	spanText.innerHTML = option.slice( option.lastIndexOf("/") +1 ) + "<br />";
+	radioParent.appendChild(spanText);
+	
+   // la competencia
+	option = "/home/pi/multimierda/musica/lacompetencia.mp3";
+	radioInput = document.createElement("input")
+	radioInput.setAttribute('type', 'radio');
+	radioInput.setAttribute('name', "select_mp3_radio");
+	radioInput.setAttribute('value', option);
+	if( option.localeCompare( mp3_radio ) == 0 )
+		radioInput.setAttribute('checked', 'checked');
+	radioParent.appendChild(radioInput);
+
+	spanText = document.createElement("span")
+	spanText.innerHTML = option.slice( option.lastIndexOf("/") +1 ) + "<br />";
+	radioParent.appendChild(spanText);
+	
+}
+
+function get_videos( )
+{
+	var xhr = new XMLHttpRequest();
+	if ( typeof xhr.withCredentials === undefined ){
+		return false;
+	}
+
+	xhr.onerror = function(e){
+		alert( "Error getting media data." );
+	}
+
+	xhr.onprogress = function(e){
+		var ratio = e.loaded / e.total;
+		//debug( ratio + "% descargado." );
+	}
+
+	// Data received
+	xhr.onload = function(e){
+		received_videos(e, xhr);
+	}
+
+	xhr.open("GET", "videos.json", true);
+
+	//param_post  = "tipo=1";
+
+	xhr.setRequestHeader ('Content-type','application/x-www-form-urlencoded')
+	//xhr.send( param_post );
+	xhr.send( );
+
+}
+
+function received_videos(e, xhr){
+
+	var radioInput="";
+	var spanText;
+	var radioParent = document.getElementById("list_videos");
+	var video = localStorage.getItem("video");
+
+	radioParent.innerHTML="";
+
+
+/*
+	for ( var n=0; n<video.length; n++){
+	}
+*/
+	var aVideos = JSON.parse(xhr.responseText);
+	for( var n=0;n<aVideos.length;n++){
+		radioInput = document.createElement("input")
+		radioInput.setAttribute('type', 'radio');
+		radioInput.setAttribute('name', "select_video");
+		radioInput.setAttribute('value', aVideos[n]);
+
+		if( aVideos[n].localeCompare( video ) == 0 )
+			radioInput.setAttribute('checked', 'checked');
+
+		radioParent.appendChild(radioInput);
+
+		spanText = document.createElement("span")
+		spanText.innerHTML = aVideos[n].slice( aVideos[n].lastIndexOf("/") +1 ) + "<br />";
+		radioParent.appendChild(spanText);
+	}
+
+}
+
+function get_subtitles( )
+{
+	var xhr = new XMLHttpRequest();
+	if ( typeof xhr.withCredentials === undefined ){
+		return false;
+	}
+
+	xhr.onerror = function(e){
+		alert( "Error getting media data." );
+	}
+
+	xhr.onprogress = function(e){
+		var ratio = e.loaded / e.total;
+		//debug( ratio + "% descargado." );
+	}
+
+	// Data received
+	xhr.onload = function(e){
+		received_subtitles(e, xhr);
+	}
+
+	xhr.open("GET", "subtitles.json", true);
+
+	xhr.setRequestHeader ('Content-type','application/x-www-form-urlencoded')
+	xhr.send( );
+
+}
+
+function received_subtitles(e, xhr){
+
+	var radioInput="";
+	var spanText;
+	var radioParent = document.getElementById("list_subtitles");
+	var subtitles = localStorage.getItem("subtitles");
+
+	radioInput = document.createElement("input")
+	radioInput.setAttribute('type', 'radio');
+	radioInput.setAttribute('name', "select_subtitles");
+	radioInput.setAttribute('value', '');
+	radioParent.appendChild(radioInput);
+	spanText = document.createElement("span")
+	spanText.innerHTML = "No subtitles<br />";
+	radioParent.appendChild(spanText);
+
+	radioParent.innerHTML="";
+
+	var aSubtitles = JSON.parse(xhr.responseText);
+	for( var n=0; n < aSubtitles.length; n++){
+		radioInput = document.createElement("input")
+		radioInput.setAttribute('type', 'radio');
+		radioInput.setAttribute('name', "select_subtitles");
+		radioInput.setAttribute('value', aSubtitles[n]);
+
+		if( aSubtitles[n].localeCompare( subtitles ) == 0 )
+			radioInput.setAttribute('checked', 'checked');
+
+		radioParent.appendChild(radioInput);
+
+		spanText = document.createElement("span")
+		spanText.innerHTML = aSubtitles[n].slice( aSubtitles[n].lastIndexOf("/") +1 ) + "<br />";
+		radioParent.appendChild(spanText);
+	}
+
+}
+
+
+function return_media(){
+
+	var n;
+	var mp3Radio = document.getElementsByName("select_mp3_radio");
+	var videos = document.getElementsByName("select_video");
+	var subtitles = document.getElementsByName("select_subtitles");
+
+	n=0;
+	while( n < mp3Radio.length ){
+		if( mp3Radio[n].checked ){
+			localStorage.setItem( "mp3_radio", mp3Radio[n].value );
+			break;
+		}
+		n++;
+	}
+
+	n=0;
+	while( n < videos.length ){
+		if( videos[n].checked ){
+			localStorage.setItem( "video", videos[n].value );
+			break;
+		}
+		n++;
+	}
+
+	n=0;
+	while( n < subtitles.length ){
+		if( subtitles[n].checked ){
+			localStorage.setItem( "subtitles", subtitles[n].value );
+			break;
+		}
+		n++;
+	}
+
+	window.location.assign("/webmote.html");
+
+}
+
+/*
+Asigns events to buttons
+*/
+function init_buttons(){
+
+	document.getElementById("btn_return_media").onclick=function(){ 
+		return_media();
+	 };
+	document.getElementById("btn_read_usb").onclick=function(){ 
+		sendXhr("usb");
+	 };
+	document.getElementById("btn_get_segonahora").onclick=function(){ 
+		sendXhr("lasegonahora");
+	 };
+	document.getElementById("btn_get_lacompetencia").onclick=function(){ 
+		sendXhr('lacompetencia');
+	 };
+
+}
+
+
+function sendXhr( signal )
+{
+	var post_data = "";
+	var xhr = new XMLHttpRequest();
+	var video,subtitles;
+
+
+	if ( signal == null )
+		return;
+
+	post_data = "c=" + signal;
+
+	if( signal === "start" ){
+
+		video = localStorage.getItem("video");
+		subtitles = localStorage.getItem("subtitles");
+
+		post_data += "&video=" + video;
+		post_data += "&subtitles=" + subtitles;
+
+	}
+
+
+	xhr.onerror = function(e){
+		alert( "Error creating xhr signal." );
+	}
+
+	xhr.onprogress = function(e){
+		var ratio = e.loaded / e.total;
+		//debug( ratio + "% descargado." );
+	}
+
+
+	xhr.onreadystatechange=function()
+	{
+	if (xhr.readyState == 4 && xhr.status == 200)
+		{
+			if( signal === 'usb' ){
+				reload_media();
+			}
+
+			else if( signal === 'lasegonahora' ){
+				alert('segona hora returned');
+			}
+
+		}
+	}
+
+
+	xhr.open("POST", "omx_command", true);
+
+	// Envia el formulario
+	xhr.setRequestHeader ('Content-type','application/x-www-form-urlencoded');
+	xhr.send( post_data );
+
+}
+</script>
+
+</body>
+</html>
