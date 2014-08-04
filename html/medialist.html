@@ -276,10 +276,15 @@ function init_buttons(){
 		sendXhr("usb");
 	 };
 	document.getElementById("btn_get_segonahora").onclick=function(){ 
+		this.disabled = true;
+		this.className = 'medium_button_dissabled';
 		sendXhr("lasegonahora");
 	 };
-	document.getElementById("btn_get_lacompetencia").onclick=function(){ 
+	document.getElementById("btn_get_lacompetencia").onclick=function(){
+		this.disabled = true;
+		this.className = 'medium_button_dissabled';
 		sendXhr('lacompetencia');
+
 	 };
 
 }
@@ -328,6 +333,13 @@ function sendXhr( signal )
 
 			else if( signal === 'lasegonahora' ){
 				alert('segona hora returned');
+				document.getElementById("btn_get_segonahora").disabled=false;
+				document.getElementById("btn_get_segonahora").className='medium_button';
+			}
+			else if( signal === 'lacompetencia' ){
+				alert('La competencia returned');
+				document.getElementById("btn_get_lacompetencia").disabled=false;
+				document.getElementById("btn_get_lacompetencia").className='medium_button';
 			}
 
 		}
