@@ -31,16 +31,44 @@ var walk = function(dir, re,  done) {
   });
 };
 
-function start_mp3(mp3) {
-	var spawn;
-	var aParams = [mp3];
+function halt() {
+	var spawn, command;
+	var aParams = [halt];
 
-	spawn = require('child_process').spawn,
-	 mp3Player = spawn('/home/pi/bin/playMp3', aParams, {  stdio: ['pipe', 'pipe', process.stderr]  });
+	spawn = require('child_process').spawn;
+	command = spawn('sudo', aParams);
+
+
+	command.stdout.on('data', function (data) {
+	  console.log('stdout: ' + data);
+	});
+
+	command.stderr.on('data', function (data) {
+	  console.log('stderr: ' + data);
+	});
+
+	command.stdin.on('data', function (data) {
+	  console.log('stdin: ' + data);
+	});
+
+	command.on('close', function (code) {
+	  console.log('child process exited with code ' + code);
+	});
+
+
+	return mp3Player;
+}
+
+function start_mp3(mp3) {
+	var spawn, mp3Player;
+	var aParams = ['-R'];
+
+	spawn = require('child_process').spawn;
+	mp3Player = spawn('/usr/bin/mpg123', aParams);
 
 
 	mp3Player.stdout.on('data', function (data) {
-	  console.log('stdout: ' + data);
+	  //console.log('stdout: ' + data);
 	});
 
 	mp3Player.stderr.on('data', function (data) {
@@ -223,22 +251,20 @@ var server = http.createServer(function (req, res) {
 
 	console.log("Command signal received: " + command);
 
-	if ( command === "r600" ){
-		command = '\x1B\x5B\x41';
-	}
-	else if ( command === "l600" ){
-		command = '\x1B\x5B\x42';
-	}
-	else if ( command === "r30" ){
-		command = '\x1B\x5B\x43';
-	}
-	else if ( command === "l30" ){
-		command = '\x1B\x5B\x44';
+	if( command === 'halt' ){
+		console.log("Sayonara, it was funny while I was here");
+		halt();
 	}
 
 	else if ( command === "start_mp3" && mp3_player == null && player == null){
 		console.log("Starting mp3 reproduction.." + mp3 );
 		mp3_player = start_mp3(mp3);
+		console.log("MP3 player pid: " + mp3_player.pid);
+		console.log("MP3 connected: " + mp3_player.connected);
+
+		if( mp3_player ){
+			mp3_player.stdin.write("load " + mp3 + '\n');
+		}
 	}
 
 
@@ -246,6 +272,7 @@ var server = http.createServer(function (req, res) {
 		console.log("Starting video play.." + video + " subtitles " + subtitles);
 		player = start_video(video, subtitles);
 	}
+
 	else if ( command === "usb" ){
 		var count_return = 0;
 		console.log("Reading usb disks.");
@@ -281,21 +308,97 @@ var server = http.createServer(function (req, res) {
 
 	}
 
+	// Control commands sent to video player
 	if( player != null ){
 		console.log("Sending signal to player: " + command );
-		player.stdin.write(command);
+		if ( command === 'stop' ){
+			player.stdin.write('q');
+		}
+		else if ( command === 'pause' ){
+			player.stdin.write('p');
+		}
+		else if ( command === 'info' ){
+			player.stdin.write('z');
+		}
+		else if ( command === 'subtitle' ){
+			player.stdin.write('s');
+		}
+		else if ( command === 'rw' ){
+			player.stdin.write('<');
+		}
+		else if ( command === 'ff' ){
+			player.stdin.write('<');
+		}
+		else if ( command === 'vol+' ){
+			player.stdin.write('+');
+		}
+		else if ( command === 'vol-' ){
+			player.stdin.write('-');
+		}
+
+		else if ( command === 'skip++' ){
+			player.stdin.write('\x1B\x5B\x41');
+		}
+		else if ( command === 'skip--' ){
+			player.stdin.write('\x1B\x5B\x42');
+		}
+		else if ( command === 'skip+' ){
+			player.stdin.write('\x1B\x5B\x43');
+		}
+		else if ( command === 'skip-' ){
+			player.stdin.write('\x1B\x5B\x44');
+		}
+
 	}
 	else if( mp3_player != null ){
-		if( command ==="q" ){
-			console.log("Sending signal to mp3 player: " + command );
-			mp3_player.stdin.write("q");
+		console.log("Sending signal to mp3 player: " + command );
+		if( command === 'stop'){
+			mp3_player.stdin.write('quit\n');
 		}
+		else if ( command === 'pause' ){
+			mp3_player.stdin.write('PAUSE\n');
+		}
+		else if ( command === 'vol+' ){
+			mp3_player.stdin.write('VOLUME 100\n');
+		}
+		else if ( command === 'vol-' ){
+			mp3_player.stdin.write('VOLUME 50\n');
+		}
+
+		else if ( command === 'skip++' ){
+			mp3_player.stdin.write('JUMP +60s\n');
+		}
+		else if ( command === 'skip--' ){
+			mp3_player.stdin.write('JUMP -60s\n');
+		}
+		else if ( command === 'skip+' ){
+			mp3_player.stdin.write('JUMP +10s\n');
+		}
+		else if ( command === 'skip-' ){
+			mp3_player.stdin.write('JUMP -10s\n');
+		}
+/*
+		else if ( command === 'info' ){
+			mp3_player.stdin.write('z');
+		}
+		else if ( command === 'subtitle' ){
+			mp3_player.stdin.write('s');
+		}
+
+		else if ( command === 'rw' ){
+			mp3_player.stdin.write('<');
+		}
+		else if ( command === 'ff' ){
+			mp3_player.stdin.write('<');
+		}
+*/
+
 	}
 	else{
-		console.log("Player not found.");
+		console.log("Humm, I'm just thinking I don't kown what tod do.");
 	}
 
-	if( command === "q" ){
+	if( command === "stop" ){
 		console.log("reset player");
 		if( mp3_player ){
 			mp3_player = null;
