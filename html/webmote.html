@@ -29,6 +29,7 @@ Subtitles: <span class="selected_text" id="video_subtitles">house4.srt</span>
 <input type="button" class="remote_button" id="btn_start_mp3" value="Start MP3" />
 <input type="button" class="remote_button" id="btn_stop" value="Stop" />
 <input type="button" class="remote_button" id="btn_info" value="Info" />
+<input type="button" class="remote_button" id="btn_halt" value="Halt" />
 <input type="button" class="remote_button" id="btn_subtitle" value="Subtitles" />
 <br/>
 
@@ -97,47 +98,51 @@ function init_buttons(){
 	 };
 
 	document.getElementById("btn_pause").onclick=function(){ 
-		sendXhr("p");
+		sendXhr("pause");
 	 };
 
 	document.getElementById("btn_info").onclick=function(){ 
-		sendXhr("z");
+		sendXhr("info");
 	 };
 
 	document.getElementById("btn_subtitle").onclick=function(){ 
-		sendXhr("s");
+		sendXhr("subtitle");
 	 };
 
 	document.getElementById("btn_stop").onclick=function(){ 
-		sendXhr("q");
+		sendXhr("stop");
+	 };
+
+	document.getElementById("btn_halt").onclick=function(){ 
+		sendXhr("halt");
 	 };
 
 	document.getElementById("btn_rw").onclick=function(){ 
-		sendXhr("<");
+		sendXhr("rw");
 	 };
 
 	document.getElementById("btn_ff").onclick=function(){ 
-		sendXhr(">");
+		sendXhr("ff");
 	 };
 
 	document.getElementById("btn_volume_up").onclick=function(){ 
-		sendXhr("+");
+		sendXhr("vol+");
 	 };
 	document.getElementById("btn_volume_down").onclick=function(){ 
-		sendXhr("-");
+		sendXhr("vol-");
 	 };
 
 	document.getElementById("btn_left_600").onclick=function(){ 
-		sendXhr("l600");
+		sendXhr("skip--");
 	 };
 	document.getElementById("btn_right_600").onclick=function(){ 
-		sendXhr("r600");
+		sendXhr("skip++");
 	 };
 	document.getElementById("btn_left_30").onclick=function(){ 
-		sendXhr("l30");
+		sendXhr("skip-");
 	 };
 	document.getElementById("btn_right_30").onclick=function(){ 
-		sendXhr("r30");
+		sendXhr("skip+");
 	 };
 }
 
