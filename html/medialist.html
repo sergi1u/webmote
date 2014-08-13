@@ -22,8 +22,8 @@
 </nav>
 
 <section class="titles_selector">
-Radio mp3
-<div id="list_mp3_radio" />
+Fixed mp3
+<div id="fixed_mp3" />
 </section>
 
 <section class="titles_selector">
@@ -36,6 +36,10 @@ Subtitles
 <div id="list_subtitles" />
 </section>
 
+<section class="titles_selector">
+MP3
+<div id="list_mp3" />
+</section>
 
 <script languaje="text/javascript">
 
@@ -50,18 +54,19 @@ function init_page(){
 
 function reload_media()
 {
-	get_mp3_radio()
+	get_fixed_mp3()
 	get_videos();
 	get_subtitles();
+	get_mp3();
 
 }
 
-function get_mp3_radio()
+function get_fixed_mp3()
 {
 	var radioInput="";
 	var spanText;
-	var radioParent = document.getElementById("list_mp3_radio");
-	var mp3_radio = localStorage.getItem("mp3_radio");
+	var radioParent = document.getElementById("fixed_mp3");
+	var fixed_mp3 = localStorage.getItem("mp3");
 	var option=""
 
 	radioParent.innerHTML="";
@@ -70,23 +75,23 @@ function get_mp3_radio()
 	option = "/home/pi/multimierda/musica/segonahora.mp3";
 	radioInput = document.createElement("input")
 	radioInput.setAttribute('type', 'radio');
-	radioInput.setAttribute('name', "select_mp3_radio");
+	radioInput.setAttribute('name', "select_fixed_mp3");
 	radioInput.setAttribute('value', option);
-	if( option.localeCompare( mp3_radio ) == 0 )
+	if( option.localeCompare( fixed_mp3 ) == 0 )
 		radioInput.setAttribute('checked', 'checked');
 	radioParent.appendChild(radioInput);
 
 	spanText = document.createElement("span")
-	spanText.innerHTML = option.slice( option.lastIndexOf("/") +1 ) + "<br />";
+	spanText.innerHTML = option.slice( option.lastIndexOf("/") +1 ) + " ";
 	radioParent.appendChild(spanText);
 	
    // la competencia
 	option = "/home/pi/multimierda/musica/lacompetencia.mp3";
 	radioInput = document.createElement("input")
 	radioInput.setAttribute('type', 'radio');
-	radioInput.setAttribute('name', "select_mp3_radio");
+	radioInput.setAttribute('name', "select_fixed_mp3");
 	radioInput.setAttribute('value', option);
-	if( option.localeCompare( mp3_radio ) == 0 )
+	if( option.localeCompare( fixed_mp3 ) == 0 )
 		radioInput.setAttribute('checked', 'checked');
 	radioParent.appendChild(radioInput);
 
@@ -136,11 +141,21 @@ function received_videos(e, xhr){
 
 	radioParent.innerHTML="";
 
+	radioInput = document.createElement("input")
+	radioInput.setAttribute('type', 'radio');
+	radioInput.setAttribute('name', 'select_video');
+	radioInput.setAttribute('value', '');
 
-/*
-	for ( var n=0; n<video.length; n++){
-	}
-*/
+	if( video === null )
+		radioInput.setAttribute('checked', 'checked');
+
+	radioParent.appendChild(radioInput);
+
+	spanText = document.createElement("span")
+	spanText.innerHTML = "No video<br />";
+	radioParent.appendChild(spanText);
+
+
 	var aVideos = JSON.parse(xhr.responseText);
 	for( var n=0;n<aVideos.length;n++){
 		radioInput = document.createElement("input")
@@ -207,6 +222,7 @@ function received_subtitles(e, xhr){
 	radioParent.innerHTML="";
 
 	var aSubtitles = JSON.parse(xhr.responseText);
+	
 	for( var n=0; n < aSubtitles.length; n++){
 		radioInput = document.createElement("input")
 		radioInput.setAttribute('type', 'radio');
@@ -225,18 +241,98 @@ function received_subtitles(e, xhr){
 
 }
 
+function get_mp3( )
+{
+	var xhr = new XMLHttpRequest();
+	if ( typeof xhr.withCredentials === undefined ){
+		return false;
+	}
+
+	xhr.onerror = function(e){
+		alert( "Error getting media data." );
+	}
+
+	xhr.onprogress = function(e){
+		var ratio = e.loaded / e.total;
+		//debug( ratio + "% descargado." );
+	}
+
+	// Data received
+	xhr.onload = function(e){
+		received_mp3(e, xhr);
+	}
+
+	xhr.open("GET", "mp3.json", true);
+
+	xhr.setRequestHeader ('Content-type','application/x-www-form-urlencoded')
+	xhr.send( );
+
+}
+
+function received_mp3(e, xhr){
+
+	var radioInput="";
+	var elem_ul;
+	var elem_li;
+	var spanText;
+	var radioParent = document.getElementById("list_mp3");
+	var mp3 = localStorage.getItem("mp3");
+	radioParent.innerHTML="";
+
+	elem_ul = document.createElement("ul")
+	radioParent.appendChild(elem_ul);
+
+	radioInput = document.createElement("input")
+	radioInput.setAttribute('type', 'checkbox');
+	radioInput.setAttribute('name', "select_mp3");
+	radioInput.setAttribute('value', '');
+
+	spanText = document.createElement("span");
+	spanText.innerHTML = 'Delete all selected';
+
+	elem_li = document.createElement("li");
+	elem_li.appendChild(radioInput);
+	elem_li.appendChild(spanText);
+
+	elem_ul.appendChild(elem_li);
+
+
+	var aMp3 = JSON.parse(xhr.responseText);
+	for( var n=0; n < aMp3.length; n++){
+
+		radioInput = document.createElement("input")
+		radioInput.setAttribute('type', 'checkbox');
+		radioInput.setAttribute('name', "select_mp3");
+		radioInput.setAttribute('value', aMp3[n]);
+
+		if( aMp3[n].localeCompare( mp3 ) == 0 )
+			radioInput.setAttribute('checked', 'checked');
+
+		spanText = document.createElement("span");
+		spanText.innerHTML = aMp3[n].slice( aMp3[n].lastIndexOf("/") +1 );
+
+		elem_li = document.createElement("li");
+		elem_li.appendChild(radioInput);
+		elem_li.appendChild(spanText);
+
+		elem_ul.appendChild(elem_li);
+
+	}
+
+}
+
 
 function return_media(){
 
 	var n;
-	var mp3Radio = document.getElementsByName("select_mp3_radio");
+	var fixed_mp3 = document.getElementsByName("select_fixed_mp3");
 	var videos = document.getElementsByName("select_video");
 	var subtitles = document.getElementsByName("select_subtitles");
 
 	n=0;
-	while( n < mp3Radio.length ){
-		if( mp3Radio[n].checked ){
-			localStorage.setItem( "mp3_radio", mp3Radio[n].value );
+	while( n < fixed_mp3.length ){
+		if( fixed_mp3[n].checked ){
+			localStorage.setItem( "mp3", fixed_mp3[n].value );
 			break;
 		}
 		n++;
