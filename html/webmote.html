@@ -15,20 +15,23 @@
 
 <section>
 
-MP3: <span class="selected_text" id="mp3_title"></span>
+MP3: <span class="selected_text" id="mp3_title">---</span>
 <span class="span_spaces">&nbsp;</span>
-Video: <span class="selected_text" id="video_title">house4.mkv</span>
+Video: <span class="selected_text" id="video_title">---</span>
 <span class="span_spaces">&nbsp;</span>
-Subtitles: <span class="selected_text" id="video_subtitles">house4.srt</span>
-<input type="button" class="medium_button" id="btn_change_media" value="Change Media" />
+Subtitles: <span class="selected_text" id="video_subtitles">---</span>
 
 <br/>
+<input type="button" class="medium_button" id="btn_change_media" value="Select Media" />
+<input type="button" class="medium_button" id="btn_swap_media" value="Swap" />
 
+</section>
 
-<input type="button" class="remote_button" id="btn_start" value="Start" />
-<input type="button" class="remote_button" id="btn_start_mp3" value="Start MP3" />
-<input type="button" class="remote_button" id="btn_stop" value="Stop" />
-<input type="button" class="remote_button" id="btn_info" value="Info" />
+<section id="control_media">
+
+<input type="button" class="remote_button" id="btn_start" value="Start MP3" />
+<input type="button" class="remote_button" id="btn_stop" value="Stop"/>
+<!--<input type="button" class="remote_button" id="btn_info" value="Info" /> -->
 <input type="button" class="remote_button" id="btn_halt" value="Halt" />
 <input type="button" class="remote_button" id="btn_subtitle" value="Subtitles" />
 <br/>
@@ -47,6 +50,7 @@ Subtitles: <span class="selected_text" id="video_subtitles">house4.srt</span>
 <input type="button" class="remote_button" id="btn_right_30" value=">" />
 <input type="button" class="remote_button" id="btn_right_600" value=">>" />
 
+
 </section>
 
 
@@ -55,19 +59,23 @@ Subtitles: <span class="selected_text" id="video_subtitles">house4.srt</span>
 	"use strict";
 
 	init_buttons();
+	swap_media();
 
 function init_webmote()
 {
 
-	var mp3 = localStorage.getItem("mp3_radio");
+	var mp3 = localStorage.getItem("mp3");
 	var video = localStorage.getItem("video");
 	var subtitles = localStorage.getItem("subtitles");
 
-	document.getElementById("mp3_title").innerHTML = mp3.slice( mp3.lastIndexOf("/") +1 );
+	if(mp3 !== null)
+		document.getElementById("mp3_title").innerHTML = mp3.slice( mp3.lastIndexOf("/") +1 );
 
-	document.getElementById("video_title").innerHTML = video.slice( video.lastIndexOf("/") +1 );
+	if( video !== null )
+		document.getElementById("video_title").innerHTML = video.slice( video.lastIndexOf("/") +1 );
 
-	document.getElementById("video_subtitles").innerHTML = subtitles.slice ( subtitles.lastIndexOf("/") +1 );
+	if( subtitles !== null )
+		document.getElementById("video_subtitles").innerHTML = subtitles.slice ( subtitles.lastIndexOf("/") +1 );
 
 	//if ( video === null )
 	//	return;
@@ -77,6 +85,52 @@ function init_webmote()
 
 function change_media(){
 	window.location.assign("/medialist.html");
+}
+
+function swap_media()
+{
+	var button =	document.getElementById("btn_start");
+	var media = localStorage.getItem("media");
+	var video = localStorage.getItem("video");
+	var mp3 = localStorage.getItem("mp3");
+
+	if(media === null ){
+		if( mp3 != null && mp3 != '' ){
+			localStorage.setItem('media','mp3');
+			button.value = "Start MP3";
+			button.onclick=function(){ 
+				sendXhr("start_mp3");
+		 	};
+		}
+		else if( video != null && video != '' ){
+			localStorage.setItem('media','video');
+			button.value = "Start video";
+			button.onclick=function(){ 
+				sendXhr("start");
+		 	};
+		}
+	}
+	else if ( media === 'mp3' && video != null && video != '')
+	{
+		localStorage.setItem('media','video');
+		button.value = "Start video";
+		button.onclick=function(){ 
+			sendXhr("start");
+	 	};
+	}
+	else if ( media === 'video' && mp3 != null && mp3 != '' )
+	{
+		localStorage.setItem('media','mp3');
+		button.value = "Start MP3";
+		button.onclick=function(){ 
+			sendXhr("start_mp3");
+	 	};
+	}
+	else
+		localStorage.removeItem('media');
+
+
+
 }
 
 /*
@@ -90,33 +144,37 @@ function init_buttons(){
 	 };
 
 	document.getElementById("btn_start").onclick=function(){ 
-		sendXhr("start");
-	 };
-
-	document.getElementById("btn_start_mp3").onclick=function(){ 
 		sendXhr("start_mp3");
-	 };
-
-	document.getElementById("btn_pause").onclick=function(){ 
-		sendXhr("pause");
-	 };
-
-	document.getElementById("btn_info").onclick=function(){ 
-		sendXhr("info");
-	 };
-
-	document.getElementById("btn_subtitle").onclick=function(){ 
-		sendXhr("subtitle");
 	 };
 
 	document.getElementById("btn_stop").onclick=function(){ 
 		sendXhr("stop");
 	 };
 
+	document.getElementById("btn_swap_media").onclick=function(){ 
+		swap_media();
+	 };
+
+	document.getElementById("btn_pause").onclick=function(){ 
+		sendXhr("pause");
+	 };
+
+/*
+	document.getElementById("btn_info").onclick=function(){ 
+		sendXhr("info");
+	 };
+*/
+
+	document.getElementById("btn_subtitle").onclick=function(){ 
+		sendXhr("subtitle");
+	 };
+
+
+/*
 	document.getElementById("btn_halt").onclick=function(){ 
 		sendXhr("halt");
 	 };
-
+*/
 	document.getElementById("btn_rw").onclick=function(){ 
 		sendXhr("rw");
 	 };
@@ -164,9 +222,6 @@ function sendXhr( signal )
 		video = localStorage.getItem("video");
 		subtitles = localStorage.getItem("subtitles");
 
-		//post_data += "&video=" + "/home/pi/multimierda/video/house2.mkv";
-		//post_data += "&subtitles=" + "/home/pi/multimierda/video/house2.srt";
-
 		post_data += "&video=" + video;
 		post_data += "&subtitles=" + subtitles;
 
@@ -174,7 +229,7 @@ function sendXhr( signal )
 
 	else if( signal === "start_mp3" ){
 
-		mp3 = localStorage.getItem("mp3_radio");
+		mp3 = localStorage.getItem("mp3");
 
 		post_data += "&mp3=" + mp3;
 	}
@@ -188,9 +243,14 @@ function sendXhr( signal )
 		//debug( ratio + "% descargado." );
 	}
 
-	// Se han recibido los datos solicitados
-	xhr.onload = function(e){
-		//xhr_feedback(e, xhr);
+	// Request completed
+	xhr.onreadystatechange=function()
+	{
+		if (xhr.readyState == 4 && xhr.status == 200)
+		{
+			if( signal === 'stop' ){
+			}
+		}
 	}
 
 	xhr.open("POST", "omx_command", true);
