@@ -150,6 +150,7 @@ var player = null;
 var mp3_player = null;
 var aVideos; 
 var aSubtitles;
+var aMp3;
 
 walk(process.env.HOME, /.mp4|.mkv|.avi$/i , function(err, results) {
   if (err) throw err;
@@ -161,6 +162,10 @@ walk(process.env.HOME, /.srt$/i , function(err, results) {
   aSubtitles = results.sort();
 });
 
+walk(process.env.HOME, /.mp3$/i , function(err, results) {
+  if (err) throw err;
+  aMp3 = results.sort();
+});
 
 var server = http.createServer(function (req, res) {
   var body = "";
@@ -177,7 +182,7 @@ var server = http.createServer(function (req, res) {
 
     if( url == "/webmote.css" )
    	 res.setHeader("Content-type", "text/css");
-    else if( url == "/videos.json" || url == "/subtitles.json" ||  url == "/getMp3Radio.json" )
+    else if( url == "/videos.json" || url == "/subtitles.json" ||  url == "/mp3.json" )
    	 res.setHeader("Content-type", "application/json");
     else
    	 res.setHeader("Content-type", "text/html");
@@ -213,14 +218,25 @@ var server = http.createServer(function (req, res) {
        res.end( JSON.stringify( aVideos) );
     }
     else if( url === "/subtitles.json"  ){
-       res.end( JSON.stringify( aSubtitles) );
+	if( aSubtitles.length > 0 )
+      	 res.end( JSON.stringify( aSubtitles) );
+	else
+	 res.end('[""]');
+
     }
+    else if( url === "/mp3.json"  ){
+ 	if( aMp3.length > 0 )
+    	  res.end( JSON.stringify( aMp3) );
+ 	else
+	 res.end('[""]');
+   }
 
 
     else if( url == "/omx_command" ){
 	console.log(body);
 	var video = "";
 	var subtitles = "";
+	var mp3 = "";
 	var arr_commands;
 	var arr_params;
 	var param;
@@ -246,6 +262,9 @@ var server = http.createServer(function (req, res) {
 		else if( param[0] === "subtitles" ){
 			subtitles = param[1];
 		}
+		else if( param[0] === "mp3" ){
+			mp3 = param[1];
+		}
 	}
 
 
@@ -259,10 +278,10 @@ var server = http.createServer(function (req, res) {
 	else if ( command === "start_mp3" && mp3_player == null && player == null){
 		console.log("Starting mp3 reproduction.." + mp3 );
 		mp3_player = start_mp3(mp3);
-		console.log("MP3 player pid: " + mp3_player.pid);
-		console.log("MP3 connected: " + mp3_player.connected);
 
 		if( mp3_player ){
+			console.log("MP3 player pid: " + mp3_player.pid);
+			console.log("MP3 connected: " + mp3_player.connected);
 			mp3_player.stdin.write("load " + mp3 + '\n');
 		}
 	}
@@ -281,7 +300,7 @@ var server = http.createServer(function (req, res) {
 			  aVideos = results.slice();
 			  count_return++;
 			  console.log("Videos read." + count_return );
-			  if ( count_return >1 )
+			  if ( count_return >2 )
 				res.end('');
 			});
 
@@ -290,7 +309,17 @@ var server = http.createServer(function (req, res) {
 			  aSubtitles = results.sort();
 			  count_return++;
 			  console.log("Subtitles read." + count_return );
-			  if ( count_return >1 )
+			  if ( count_return >2 )
+				res.end('');
+			});
+
+			walk('/media/usb0', /.mp3$/i , function(err, results) {
+			  if (err) throw err;
+			  aMp3 = results.sort();
+			  count_return++;
+			  console.log(aMp3.length + " mp3 files found.");
+			  console.log("MP3 read." + count_return );
+			  if ( count_return >2 )
 				res.end('');
 			});
 
@@ -313,6 +342,7 @@ var server = http.createServer(function (req, res) {
 		console.log("Sending signal to player: " + command );
 		if ( command === 'stop' ){
 			player.stdin.write('q');
+			player = null;
 		}
 		else if ( command === 'pause' ){
 			player.stdin.write('p');
@@ -354,6 +384,7 @@ var server = http.createServer(function (req, res) {
 		console.log("Sending signal to mp3 player: " + command );
 		if( command === 'stop'){
 			mp3_player.stdin.write('quit\n');
+			mp3_player = null;
 		}
 		else if ( command === 'pause' ){
 			mp3_player.stdin.write('PAUSE\n');
@@ -396,15 +427,6 @@ var server = http.createServer(function (req, res) {
 	}
 	else{
 		console.log("Humm, I'm just thinking I don't kown what tod do.");
-	}
-
-	if( command === "stop" ){
-		console.log("reset player");
-		if( mp3_player ){
-			mp3_player = null;
-                }
-		else if( player )
-			player = null;
 	}
 
 	if( command !== "usb" && command !== "lasegonahora" && command !== "lacompetencia" )
