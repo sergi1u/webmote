@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es" manifest="webmote.manifest" >
+<html lang="es" >
+<head>
+	<title>Raspberry Web-Remote Control</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="/jquery/mobile/jquery.mobile-1.4.3.min.css" />
+	<script src="/jquery/jquery-1.11.1.min.js"></script>
+	<script src="/jquery/mobile/jquery.mobile-1.4.3.min.js"></script>
+	<script src="video.js"></script>
+
+	<link rel="stylesheet" href="/css/themes/plain_theme.css" />
+	<link rel="stylesheet" href="/css/themes/jquery.mobile.icons.min.css" />
+</head>
+<body>
+
+<div data-role="page" id="mediam">
+
+	<div data-role="header">
+		Raspberry Web-Remote Control
+	</div><!-- /header -->
+
+	<div role="main" class="ui-content">
+
+
+<section>
+
+Video: <span id="video_title">---</span>
+<span>&nbsp;</span>
+Subtitles: <span id="video_subtitles">---</span>
+
+<br/>
+<button id="btn_change_media" data-inline="true" data-icon="action">Select Media</button>
+
+</section>
+
+<section id="control_media">
+
+<button id="btn_start" data-inline="true">Start</button>
+<button id="btn_stop" data-inline="true">Stop</button>
+<button id="btn_halt" data-inline="true">Halt</button>
+<button id="btn_subtitle" data-inline="true" >Subtitles</button>
+<br/>
+
+<!--<input type="button" id="btn_info" value="Info" /> -->
+
+<button id="btn_volume_down" data-inline="true">Vol. Dwn.</button>
+<button id="btn_volume_up" data-inline="true">Vol. Up</button>
+<br/>
+
+<button id="btn_rw" data-inline="true">Rewind</button>
+<button id="btn_pause" data-inline="true">||</button>
+<button id="btn_ff" data-inline="true">Fast Forwd.</button>
+<br/>
+
+<button id="btn_left_600" data-inline="true"><<</button>
+<button id="btn_left_30" data-inline="true"><</button>
+<button id="btn_right_30" data-inline="true">></button>
+<button id="btn_right_600" data-inline="true">>></button>
+
+</section>
+
+	</div><!-- /content -->
+
+
+</div><!-- /page -->
+
+<script type="text/javascript">
+$(document).ready( init_videom );
+</script>
+</body>
+</html>
