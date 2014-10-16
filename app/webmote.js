@@ -31,6 +31,7 @@ var walk = function(dir, re,  done) {
   });
 };
 
+
 function halt() {
 	var spawn, command;
 	var aParams = [halt];
@@ -92,12 +93,13 @@ function start_video(video, subtitles) {
 	var aParams;
 	var spawn;
 
-	if( subtitles != "" )
-		aParams = [video,subtitles];
+	if( subtitles && subtitles != "null" && subtitles != "")
+		aParams = ['-o','both','--subtitles', subtitles, video];
 	else
-		aParams = [video];
+		aParams = ['-b','-o','both', video];
 
-	spawn = require('child_process').spawn, player = spawn('/home/pi/bin/omx', aParams );
+	//spawn = require('child_process').spawn, player = spawn('/home/pi/bin/omx', aParams );
+	spawn = require('child_process').spawn, player = spawn('/usr/bin/omxplayer', aParams );
 
 	player.stdout.on('data', function (data) {
 	  console.log('stdout: ' + data);
@@ -105,6 +107,7 @@ function start_video(video, subtitles) {
 
 	player.stderr.on('data', function (data) {
 	  console.log('stderr: ' + data);
+	  return null;
 	});
 
 	player.on('close', function (code) {
@@ -121,7 +124,7 @@ function start_video(video, subtitles) {
  Mini servidor Web
 *********************************************************************************************/
 var fs = require('fs');
-var PORT=8080;
+var PORT=8081;
 var http = require('http');
 
 
@@ -130,19 +133,14 @@ var http = require('http');
 
 var postHTML="";
 
+/*
 // Contiene el HTML de la pagina index.html
 function leeHTML( page ){
 
-/*
-  fs.readFile('/home/pi/html/' + page, { encoding: "UTF8" },
-    function (err, data) {
-      if (err) throw err;
-      postHTML= data.toString();
-    });
-  return postHTML;
-*/
-  return ( fs.readFileSync( '/home/pi/html/' + page, 'UTF8'  ) );
+
+  return ( fs.readFileSync( '/home/pi/html' + page, 'UTF8'  ) );
 }
+*/
 
 //leeHTML("webmote.html");
 
@@ -152,20 +150,40 @@ var aVideos;
 var aSubtitles;
 var aMp3;
 
-walk(process.env.HOME, /.mp4|.mkv|.avi$/i , function(err, results) {
-  if (err) throw err;
-  aVideos = results.slice();
-});
+// Lee los archivos multimedia del disco local
+function read_local()
+{
+	console.log("Reading local media.");
+	walk(process.env.HOME + "/multimierda", /.mp4|.mkv|.avi$/i , function(err, results) {
+	  if (err) throw err;
+	  aVideos = results.slice();
+	});
 
-walk(process.env.HOME, /.srt$/i , function(err, results) {
-  if (err) throw err;
-  aSubtitles = results.sort();
-});
+	walk(process.env.HOME + "/multimierda", /.srt$/i , function(err, results) {
+	  if (err) throw err;
+	  aSubtitles = results.sort();
+	});
 
-walk(process.env.HOME, /.mp3$/i , function(err, results) {
-  if (err) throw err;
-  aMp3 = results.sort();
-});
+	walk(process.env.HOME + "/multimierda" , /.mp3$/i , function(err, results) {
+	  if (err) throw err;
+	  aMp3 = results.sort();
+	});
+
+}
+
+function check_file(file,callback){
+  var fs = require('fs');
+
+  stats = fs.stat(file, function(err, stat) {
+    if (stat && stat.isFile()){
+ 	return callback(null,true);
+    }
+    else{
+	return callback(err);
+    }
+  });
+
+}
 
 var server = http.createServer(function (req, res) {
   var body = "";
@@ -178,59 +196,105 @@ var server = http.createServer(function (req, res) {
     var command = "";		// command signal received from webmote client
 
     console.log(fecha + " Web request received: " + req.socket.remoteAddress + " " + url);
-    res.setHeader("Access-Control-Allow-Origin", "*");
 
-    if( url == "/webmote.css" )
-   	 res.setHeader("Content-type", "text/css");
-    else if( url == "/videos.json" || url == "/subtitles.json" ||  url == "/mp3.json" )
-   	 res.setHeader("Content-type", "application/json");
-    else
-   	 res.setHeader("Content-type", "text/html");
+    if( url.search(/.html$|.css$|.js$|.gif$|.png$|.svg$|.map$|.manifest$/i) != -1 ){
+	var fs = require('fs');
+	var file = "/home/pi/html" + url;
+	fs.readFile( file , 'UTF8', function( err, data){
+		if( !err ){
+		   if( url.search(/.css$/i) != -1 ){
+ 			res.writeHead(200, {
+				'Content-Length': data.length,
+				'Content-Type': 'text/css'
+			 });
+		   }
+		   else if( url.search(/.js$/i) != -1 ){
+ 			res.writeHead(200, {
+				'Content-Length': data.length,
+				'Content-Type': 'application/x-javascript'
+			 });
+		   }
+		   else if( url.search(/.gif$/i) != -1 ){
+ 			res.writeHead(200, {
+				'Content-Length': data.length,
+				'Content-Type': 'image/gif'
+			 });
+		   }
+		   else if( url.search(/.png$/i) != -1 ){
+ 			res.writeHead(200, {
+				'Content-Length': data.length,
+				'Content-Type': 'image/png'
+			 });
+		   }
+		   else if( url.search(/.svg$/i) != -1 ){
+ 			res.writeHead(200, {
+				'Content-Length': data.length,
+				'Content-Type': 'image/svg+xml'
+			 });
+		   }
+		   else if( url.search(/.map$/i) != -1 ){
+ 			res.writeHead(200, {
+				'Content-Length': data.length,
+				'Content-Type': 'application/octet-stream'
+			 });
+		   }
+		   else if( url.search(/.manifest$/i) != -1 ){
+ 			res.writeHead(200, {
+				'Content-Length': data.length,
+				'Content-Type': 'text/cache-manifest'
+			 });
+		   }
+		   else{
+			res.writeHead(200, {
+				'Content-Length': data.length,
+				'Content-Type': 'text/html',
+				'Access-Control-Allow-Origin': '*'
+			 });
+		   }
+		   res.end( data );
+		}
+		else{
+			res.writeHead(404);
+			res.end( );
+		}
 
-    res.writeHead(200);
-
-    if( url == "/index.html" || url == "/webmote.html" ){
-      // TODO
-      var myHTML = leeHTML("webmote.html");  // Va releyendo el fichero esto solo por depuracion
-      res.end( myHTML );
+	   } );
     }
 
-    else if( url == "/webmote.css"  ){
-      var myHTML = leeHTML("webmote.css");  // Va releyendo el fichero esto solo por depuracion
-      res.end( myHTML );
-    }
+    else if( url.search(/.json$/i) != -1 ){
+   	 //res.setHeader("Content-type", "application/json");
+	res.writeHead(200, {
+		'Content-Type': 'application/json',
+		'Access-Control-Allow-Origin': '*'
+	 });
 
-    else if( url == "/webmote_panel.html"  ){
-      var myHTML = leeHTML("webmote_panel.html");
-      res.end( myHTML );
-    }
+	     if( url === "/getMp3Radio.json"  ){
+	      //res.writeHead(200);
+	      res.end( JSON.stringify( "OK") );
+	    }
 
-    else if( url == "/medialist.html"  ){
-      var myHTML = leeHTML("medialist.html");  // Va releyendo el fichero esto solo por depuracion
-      res.end( myHTML );
-    }
+	    else if( url === "/videos.json"  ){
+	      //res.writeHead(200);
+	      res.end( JSON.stringify( aVideos) );
+	    }
+	    else if( url === "/subtitles.json"  ){
+		//res.writeHead(200);
+		if( aSubtitles.length > 0 )
+	      	 res.end( JSON.stringify( aSubtitles) );
+		else
+		 res.end('[""]');
 
-    else if( url === "/getMp3Radio.json"  ){
-       res.end( JSON.stringify( "OK") );
-    }
+	    }
+	    else if( url === "/mp3.json"  ){
+		//res.writeHead(200);
+	 	if( aMp3.length > 0 )
+	    	  res.end( JSON.stringify( aMp3) );
+	 	else
+		 res.end('[""]');
+	   }
 
-    else if( url === "/videos.json"  ){
-       res.end( JSON.stringify( aVideos) );
-    }
-    else if( url === "/subtitles.json"  ){
-	if( aSubtitles.length > 0 )
-      	 res.end( JSON.stringify( aSubtitles) );
-	else
-	 res.end('[""]');
 
-    }
-    else if( url === "/mp3.json"  ){
- 	if( aMp3.length > 0 )
-    	  res.end( JSON.stringify( aMp3) );
- 	else
-	 res.end('[""]');
-   }
-
+   }	// fin if json
 
     else if( url == "/omx_command" ){
 	console.log(body);
@@ -289,7 +353,18 @@ var server = http.createServer(function (req, res) {
 
 	else if ( command === "start" && player == null && mp3_player == null){
 		console.log("Starting video play.." + video + " subtitles " + subtitles);
-		player = start_video(video, subtitles);
+
+		check_file(video,function(err,isFile){
+			if( !err )
+				player = start_video(video, subtitles);
+			else
+				console.log(err);
+		});
+	}
+
+	else if ( command === "local" ){
+		read_local();
+		res.end('');
 	}
 
 	else if ( command === "usb" ){
@@ -338,7 +413,7 @@ var server = http.createServer(function (req, res) {
 	}
 
 	// Control commands sent to video player
-	if( player != null ){
+	else if( player != null ){
 		console.log("Sending signal to player: " + command );
 		if ( command === 'stop' ){
 			player.stdin.write('q');
@@ -357,7 +432,7 @@ var server = http.createServer(function (req, res) {
 			player.stdin.write('<');
 		}
 		else if ( command === 'ff' ){
-			player.stdin.write('<');
+			player.stdin.write('>');
 		}
 		else if ( command === 'vol+' ){
 			player.stdin.write('+');
@@ -429,15 +504,15 @@ var server = http.createServer(function (req, res) {
 		console.log("Humm, I'm just thinking I don't kown what tod do.");
 	}
 
-	if( command !== "usb" && command !== "lasegonahora" && command !== "lacompetencia" )
+	if( command !== "usb" && command !== "lasegonahora" && command !== "lacompetencia" ){
+  		res.writeHead(200);
 		res.end("");
-    }
-    // manifiesto para evitar relecturas de paginas estaticas
-    else if( url == "/manifest.webmote" ){
-	res.end(postManifest);
+	}
     }
 
+
     else{
+      res.writeHead(404);
       res.end( );
    }
 
@@ -445,6 +520,7 @@ var server = http.createServer(function (req, res) {
 
 });
 
+read_local();
 server.listen(PORT);
 
 console.log("Webmote server started :)");
