@@ -1,9 +1,0 @@
-#!/bin/sh
-
-if [ $# -eq 0 ]; then
-  echo "Faltan parametros";
-elif [ $# -gt 1 ]; then
-  omxplayer -o both  --subtitles $2 $1
-else
-  omxplayer -o both $1 ;
-fi 
