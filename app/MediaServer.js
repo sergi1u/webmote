@@ -250,11 +250,10 @@ var MediaServer = function (){
 		if( timer_sec )
 			clearInterval(timer_sec);
 
-		if( player_paused )
-			timer_sec = setInterval( inc_timer, INTERVALO_TIMER * 1000, 0);
-		else
+		if( !player_paused ){
 			timer_sec = setInterval( inc_timer, INTERVALO_TIMER * 1000, INTERVALO_TIMER);
 
+		}
 	}
 
 	video_command = function( command ){
@@ -277,18 +276,22 @@ var MediaServer = function (){
 			case 'left600':
 				tmp_transcurrido = Math.min(tmp_transcurrido-600, tmp_total);
 				player_process.stdin.write('\x1B\x5B\x42');
+				inc_timer(0);
 				break;
 			case 'left30':
 				tmp_transcurrido = Math.min(tmp_transcurrido-30, tmp_total);
 				player_process.stdin.write('\x1B\x5B\x44');
+				inc_timer(0);
 				break;
 			case 'right600':
 				tmp_transcurrido = Math.min(tmp_transcurrido+600, tmp_total);
 				player_process.stdin.write('\x1B\x5B\x41');
+				inc_timer(0);
 				break;
 			case 'right30':
 				tmp_transcurrido = Math.min(tmp_transcurrido+30, tmp_total);
 				player_process.stdin.write('\x1B\x5B\x43');
+				inc_timer(0);
 				break;
 			case 'subtitles':
 				player_process.stdin.write('s');
@@ -306,18 +309,22 @@ var MediaServer = function (){
 			case 'skip+':
 				tmp_transcurrido = Math.min(tmp_transcurrido+10, tmp_total);
 				player_process.stdin.write('JUMP +10s\n');
+				inc_timer(0);
 				break;
 			case 'skip++':
 				tmp_transcurrido = Math.min(tmp_transcurrido+60, tmp_total);
 				player_process.stdin.write('JUMP +60s\n');
+				inc_timer(0);
 				break;
 			case 'skip-':
 				tmp_transcurrido = Math.min(tmp_transcurrido-10, tmp_total);
 				player_process.stdin.write('JUMP -10s\n');
+				inc_timer(0);
 				break;
 			case 'skip--':
 				tmp_transcurrido = Math.min(tmp_transcurrido-60, tmp_total);
 				player_process.stdin.write('JUMP -60s\n');
+				inc_timer(0);
 				break;
 			default:
 				console.log("recibido comando de MP3 " + command + " que no se cómo gestionar");		}
