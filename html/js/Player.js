@@ -176,6 +176,11 @@ function init_buttons( media_type ){
 		window.location.assign("/");
 	 });
 
+	$("#btn_timer").click( function(){
+		if( player )
+			player.sendCommand("timer");
+	});
+
 
 	$("#btn_start").click( function(){
 		if( player )
