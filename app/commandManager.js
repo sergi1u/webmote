@@ -78,7 +78,7 @@ var commandManager = function () {
 	getMediaContent = function( dir , mediaContent, callback){
 		count_return = 0;
 		console.log("Reading media content.");
-			walk( dir, /.mp4|.mkv|m4v|.avi$/i , function(err, results) {
+			walk( dir, /.mp4$|.mkv$|.m4v$|.avi$/i , function(err, results) {
 			  if (err) throw err;
 
 			  mediaContent.aVideos = results.slice();
