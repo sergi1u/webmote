@@ -9,6 +9,7 @@ var MediaServer = function (){
 
 	// contadores de tiempo de reproduccion transcurrido
 	INTERVALO_TIMER = 1,
+	timer_active = false;
 	timer_sec = null;
 	tmp_total = 0, tmp_transcurrido = 0,
 
@@ -161,7 +162,6 @@ var MediaServer = function (){
 			clearInterval(timer_sec);
 			timer_sec = setInterval( inc_timer, INTERVALO_TIMER * 1000, INTERVALO_TIMER);
 
-
 		}
 		else{
 			console.log('Ya existe un proceso MP3 en ejecución!');
@@ -197,7 +197,11 @@ var MediaServer = function (){
 
 	inc_timer = function( intervalo ){
 		tmp_transcurrido += intervalo;
-		notification_clients( "Transcurrido: " + int2time( tmp_transcurrido ) + " de " + int2time(tmp_total) );
+
+		// Only sends info when is asked for (interval = 0) or timer is actived
+		if( intervalo === 0 || timer_active ){
+			notification_clients( "Transcurrido: " + int2time( tmp_transcurrido ) + " de " + int2time(tmp_total) );
+		}
 	},
 
 	int2time = function( secs ){
@@ -234,6 +238,10 @@ var MediaServer = function (){
 		return time;
 	},
 
+
+	timer = function(){
+		timer_active = timer_active ? false : true;
+	},
 
 	pause = function(){
 		if( !player_process )
@@ -295,7 +303,12 @@ var MediaServer = function (){
 				break;
 			case 'subtitles':
 				player_process.stdin.write('s');
-
+				break;
+			case 'subtitles_d':
+				player_process.stdin.write('d');
+				break;
+			case 'subtitles_f':
+				player_process.stdin.write('f');
 				break;
 			default:
 				console.log("recibido comando de video " + command + " que no se cómo gestionar");		}
