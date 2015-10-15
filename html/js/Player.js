@@ -16,6 +16,14 @@ Player.prototype.init_socket = function ()
 		console.log("Socket abierto");
 	};
 
+        this.socket.onerror = function ( ) {
+		console.log("Socket error");
+		alert.log("Socket error");
+	};
+        this.socket.onclose = function ( ) {
+		console.log("Socket cerrado");
+	};
+
         this.socket.onmessage = function (message) {
 		var data = JSON.parse(message.data);
 
@@ -45,12 +53,17 @@ Player.prototype.getMedia = function(  ){
 
 
 Player.prototype.sendCommand = function( command ){
+
 		if ( this.socket.readyState === 1 ){
 			console.log("Enviando commando " + command);
 			this.socket.send(JSON.stringify( {cmd: command} ) );
 		}
 		else{
 			console.log("Error. No hay socket abierto para enviar commando " + command);
+			
+			// si el socket está cerrado, lo reabro
+			if( this.socket.readyState === 3 )
+				this.init_socket();
 		}
 };
 
@@ -110,7 +123,7 @@ function init_video()
 {
 
 	 settings = {
-		host: 'ws://192.168.1.21:9000',
+		host: 'ws://192.168.1.20:9000',
 		logID: 'span_log',
 		media: null
 	};
@@ -142,7 +155,7 @@ function init_mp3m()
 {
 
 	 settings = {
-		host: 'ws://192.168.1.21:9000',
+		host: 'ws://192.168.1.20:9000',
 		logID: 'span_log',
 		media: null
 	};
@@ -180,7 +193,6 @@ function init_buttons( media_type ){
 		if( player )
 			player.sendCommand("timer");
 	});
-
 
 	$("#btn_start").click( function(){
 		if( player )
@@ -263,6 +275,16 @@ function init_buttons( media_type ){
 		$("#btn_subtitle").click( function(){
 			if( player )
 				player.sendCommand("subtitles");
+		});
+
+		$("#btn_subtitle_d").click( function(){
+			if( player )
+				player.sendCommand("subtitles_d");
+		});
+
+		$("#btn_subtitle_f").click( function(){
+			if( player )
+				player.sendCommand("subtitles_f");
 		});
 
 		$("#btn_rw").click( function(){
