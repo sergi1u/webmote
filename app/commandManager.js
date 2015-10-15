@@ -106,6 +106,7 @@ var commandManager = function () {
 				callback(null);
 			});
 
+
 	},	// fin lee_usb
 
 	broadcastMessage = function (comando, err ){
@@ -113,7 +114,6 @@ var commandManager = function () {
 	},
 
 	gestionaComando = function( comando , param ){
-		console.log("En gestion de comando " + comando );
 		switch (comando){
 			case 'usb':
 			case 'local':
@@ -158,6 +158,10 @@ var commandManager = function () {
 				pause();
 				break;
 
+			case 'timer':
+				timer();
+				break;
+
 			case 'start_video':
 				start_video( param );
 				console.log( "Process id: " + mediaServer.getPid() );
@@ -172,6 +176,8 @@ var commandManager = function () {
 			case 'right600':
 			case 'right30':
 			case 'subtitles':
+			case 'subtitles_d':
+			case 'subtitles_f':
 				video_command( comando );
 				break;
 
