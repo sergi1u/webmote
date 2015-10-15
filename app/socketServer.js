@@ -10,34 +10,24 @@ var socketServer = function () {
     http = require('http'),
     fs = require('fs'),
     url = require('url'),
-    domain = require('domain'),
-    reqDomain = domain.create(),
-    socketDomain = domain.create(),
-    httpDomain = domain.create(),
 
+    httpListen = function (port) {
 
-	httpListen = function (port) {
-	    httpDomain.on('error', function (err) {
-		console.log('Error caught in http domain:' + err);
-	    });
+	http.createServer(function (req, res) {
+		var pathname = url.parse(req.url).pathname;
+		console.log(pathname);
 
-	    httpDomain.run(function () {
-		http.createServer(function (req, res) {
-		    var pathname = url.parse(req.url).pathname;
-		    console.log(pathname);
-
-		    if( pathname.search(/.json$/i) != -1 ){
+		if( pathname.search(/.json$/i) != -1 ){
 			readFileJson( res, pathname );
-		    }
-		    else if (pathname == '/' || pathname == '/index.html') {
+		}
+		else if (pathname == '/' || pathname == '/index.html') {
 		        readFile(res, 'index.html');
-		    }
-		    else {
+		}
+		else {
 		        readFile(res, '.' + pathname);
-		    }
-		}).listen(port);
-	    });
-	},
+		}
+	}).listen(port);
+    },
 
 	readFile = function(res, pathname) {
 	    pathname = "/home/pi/html/" + pathname;
@@ -96,12 +86,6 @@ var socketServer = function () {
 
 	socketListen = function(port) {
 
-
-	    socketDomain.on('error', function(err) {
-		console.log('Error caught in socket domain:' + err);
-	    });
-
-	    socketDomain.run(function() { 
 		socketServer = ws.listen(port);
 
 		socketServer.on('listening',function(){
@@ -111,6 +95,7 @@ var socketServer = function () {
 		socketServer.on('connection', function (socket) {
 
 		    console.log('Connected to client');
+
 		    sockets.push(socket);
 
 		    socket.on('message', function (data) { 
@@ -120,6 +105,10 @@ var socketServer = function () {
 			if( msg['cmd'] ){
 				commandManager.gestionaComando( msg['cmd'] , msg['param'] );
 			}
+		    });
+
+		    socket.on('error', function(e){
+			console.log("Socket error " + e);
 		    });
 
 		    socket.on('close', function () {
@@ -145,10 +134,9 @@ var socketServer = function () {
 		        }
 		    });	// fin socket.on(close)
 
-                    broadcastMessage( 'msg', 'Bienvenido al socket!');
+                    broadcastMessage( 'msg', 'New socket conneced!');
 
 		});  	// fin socketServer.on(connection)
-	    });   	// fin socketDomain.run   
 	},		// fin funcion socketListen
 
 
