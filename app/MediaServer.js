@@ -34,6 +34,21 @@ var MediaServer = function (){
 			console.log("No hay proceso de video que parar!");
 	},
 
+	text2UTF8 = function ( orig, dest ){
+		var command, aParams;
+
+		command = "/home/pi/bin/text2UTF8 \"" + orig + "\" \"" + dest + "\"";
+		console.log("Convirtiendo texto: " + orig + " a " + dest);
+
+		aParams = [orig, dest];
+		require('child_process').execSync( command );
+
+		console.log("Texto convertido en: " + dest );
+
+		return dest;
+
+	},
+
 	start_video = function ( param ) {
 
 		if( !player_process ){
@@ -46,10 +61,17 @@ var MediaServer = function (){
 			console.log("Iniciando video " + param['video']);
 			get_video_duration( param['video'], function(seg){ tmp_total = seg; } );
 
-			if( subtitles && subtitles != "null" && subtitles != "")
+			if( subtitles && subtitles != "null" && subtitles != ""){
+				notification_clients("Cheking language format subtitles: " + subtitles);
+				text2UTF8( subtitles , '/tmp/subtitles.srt');
+				subtitles = '/tmp/subtitles.srt';
 				aParams = ['-o','both','--subtitles', subtitles, video];
-			else
+			}
+			else{
 				aParams = ['-b','-o','both', video];
+			}
+
+			notification_clients("Initialising video play");
 
 			spawn = require('child_process').spawn;
 			player = spawn('/usr/bin/omxplayer', aParams );
@@ -247,6 +269,8 @@ var MediaServer = function (){
 		if( !player_process )
 			return;
 
+		notification_clients("Pause on/off");
+
 		if ( player_type === 'video' )
 			player_process.stdin.write('p');
 		else
@@ -270,44 +294,55 @@ var MediaServer = function (){
 
 		switch ( command ){
 			case 'video_vol+':
+				notification_clients("Volume Up");
 				player_process.stdin.write('+');
 				break;
 			case 'video_vol-':
+				notification_clients("Volume Dow");
 				player_process.stdin.write('-');
 				break;
 			case 'rw':
+				notification_clients("RW");
 				player_process.stdin.write('<');
 				break;
 			case 'ff':
+				notification_clients("FF");
 				player_process.stdin.write('>');
 				break;
 			case 'left600':
+				notification_clients("<<");
 				tmp_transcurrido = Math.min(tmp_transcurrido-600, tmp_total);
 				player_process.stdin.write('\x1B\x5B\x42');
 				inc_timer(0);
 				break;
 			case 'left30':
+				notification_clients("<");
 				tmp_transcurrido = Math.min(tmp_transcurrido-30, tmp_total);
 				player_process.stdin.write('\x1B\x5B\x44');
 				inc_timer(0);
 				break;
 			case 'right600':
+				notification_clients(">>");
 				tmp_transcurrido = Math.min(tmp_transcurrido+600, tmp_total);
 				player_process.stdin.write('\x1B\x5B\x41');
 				inc_timer(0);
 				break;
 			case 'right30':
+				notification_clients(">");
 				tmp_transcurrido = Math.min(tmp_transcurrido+30, tmp_total);
 				player_process.stdin.write('\x1B\x5B\x43');
 				inc_timer(0);
 				break;
 			case 'subtitles':
+				notification_clients("Subtitles on/off");
 				player_process.stdin.write('s');
 				break;
 			case 'subtitles_d':
+				notification_clients("Subtitles -250ms.");
 				player_process.stdin.write('d');
 				break;
 			case 'subtitles_f':
+				notification_clients("Subtitles +250ms.");
 				player_process.stdin.write('f');
 				break;
 			default:
