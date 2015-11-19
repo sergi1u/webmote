@@ -1,9 +1,13 @@
 webmote
 =======
 
-Simple web mediacenter remote control.
+Web mediacenter remote control.
+Plug usb disk with video / subtitles files and control reproduction with your smartphone or tablet via html app.
 
-On a RaspberryPi, it uses:
+Mediaserver tested on a Raspberry Pi, using:
+
+Server architecture
+===================
 
 io.js /NodeJS to perform a web server which manages multimedia archives.
 websockets in communictions client-server
